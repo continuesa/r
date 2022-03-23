@@ -234,3 +234,59 @@ let s = "Hello, world!";
 - 这里 s 的类型是 &str：它是一个指向二进制程序特定位置的 slice。这也就是为什么字符串字面值是不可变的；&str 是一个不可变引用。
 
 ### 字符串 slice 作为参数
+- 在知道了能够获取字面值和 String 的 slice 后，我们对 first_word 做了改进，这是它的签名：
+```rust
+fn first_word(s: &String) -> &str {
+```
+- 而更有经验的 Rustacean 会编写出示例 4-9 中的签名，因为它使得可以对 String 值和 &str 值使用相同的函数：
+```rust
+fn first_word(s: &str) -> &str {
+```
+> 通过将 s 参数的类型改为字符串 slice 来改进 first_word 函数
+
+- 如果有一个字符串 slice，可以直接传递它。如果有一个 String，则可以传递整个 String 的 slice 或对 String 的引用。这种灵活性利用了 deref coercions 的优势，这个特性我们将在“函数和方法的隐式 Deref 强制转换”章节中介绍。定义一个获取字符串 slice 而不是 String 引用的函数使得我们的 API 更加通用并且不会丢失任何功能：
+- 文件名: src/main.rs
+```rust
+fn main() {
+    let my_string = String::from("hello world");
+
+    // `first_word` 适用于 `String`（的 slice），整体或全部
+    let word = first_word(&my_string[0..6]);
+    let word = first_word(&my_string[..]);
+    // `first_word` 也适用于 `String` 的引用，
+    // 这等价于整个 `String` 的 slice
+    let word = first_word(&my_string);
+
+    let my_string_literal = "hello world";
+
+    // `first_word` 适用于字符串字面值，整体或全部
+    let word = first_word(&my_string_literal[0..6]);
+    let word = first_word(&my_string_literal[..]);
+
+    // 因为字符串字面值已经 **是** 字符串 slice 了，
+    // 这也是适用的，无需 slice 语法！
+    let word = first_word(my_string_literal);
+}
+```
+
+### 其他类型的 slice
+> 字符串 slice，正如你想象的那样，是针对字符串的。不过也有更通用的 slice 类型。考虑一下这个数组：
+```rust
+let a = [1, 2, 3, 4, 5];
+```
+> 就跟我们想要获取字符串的一部分那样，我们也会想要引用数组的一部分。我们可以这样做：
+
+```rust
+let a = [1, 2, 3, 4, 5];
+
+let slice = &a[1..3];
+
+assert_eq!(slice, &[2, 3]);
+```
+> 这个 slice 的类型是 &[i32]。它跟字符串 slice 的工作方式一样，通过存储第一个集合元素的引用和一个集合总长度。你可以对其他所有集合使用这类 slice。第八章讲到 vector 时会详细讨论这些集合。
+
+
+### 总结
+- 所有权、借用和 slice 这些概念让 Rust 程序在编译时确保内存安全。Rust 语言提供了跟其他系统编程语言相同的方式来控制你使用的内存，但拥有数据所有者在离开作用域后自动清除其数据的功能意味着你无须额外编写和调试相关的控制代码。
+
+- 所有权系统影响了 Rust 中很多其他部分的工作方式，所以我们还会继续讲到这些概念，这将贯穿本书的余下内容。让我们开始第五章，来看看如何将多份数据组合进一个 struct 中。
