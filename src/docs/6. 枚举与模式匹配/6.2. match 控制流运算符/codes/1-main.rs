@@ -31,18 +31,10 @@ enum Coina {
 
 
 fn main() {
-
-  // 调用 plus_one 方法
-  let five = Some(5);
-  let six = plus_one(five);
-  let none = plus_one(None);
-  println!("five: {:#?}", five);
-  println!("six: {:#?}", six);
-  println!("none: {:#?}", none);
 }
 
 // 以枚举成员作为模式的 match 表达式
-fn _value_in_cents(coin: Coin) -> u8 {
+fn value_in_cents(coin: Coin) -> u8 {
   match coin {
     Coin::Penny => 1, // 第一个分支的模式是值 Coin::Penny 而之后的 => 运算符将模式和将要运行的代码分开。这里的代码就仅仅是值 1
     Coin::Nickel => 5,
@@ -51,7 +43,7 @@ fn _value_in_cents(coin: Coin) -> u8 {
   }
 }
 
-fn _value_in_centsa(coin: Coin) -> u8 {
+fn value_in_centsa(coin: Coin) -> u8 {
   match coin {
     Coin::Penny => {
       println!("Lucky penny!");
@@ -63,7 +55,6 @@ fn _value_in_centsa(coin: Coin) -> u8 {
   }
 }
 
-/*
 fn value_in_centsb(coin: Coina) -> u8 {
   match coin {
       Coin::Penny => 1,
@@ -73,13 +64,5 @@ fn value_in_centsb(coin: Coina) -> u8 {
           println!("State quarter from {:?}!", state);
           25
       }
-  }
-}
-*/
-
-fn plus_one(x: Option<i32>) -> Option<i32> {
-  match x {
-    None => None,
-    Some(i) => Some(i + 1),
   }
 }

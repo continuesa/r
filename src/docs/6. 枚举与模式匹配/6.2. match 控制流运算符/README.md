@@ -91,5 +91,166 @@ fn value_in_centsa(coin: Coin) -> u8 {
 
 > 作为一个例子，让我们修改枚举的一个成员来存放数据。1999 年到 2008 年间，美国在 25 美分的硬币的一侧为 50 个州的每一个都印刷了不同的设计。其他的硬币都没有这种区分州的设计，所以只有这些 25 美分硬币有特殊的价值。可以将这些信息加入我们的 enum，通过改变 Quarter 成员来包含一个 State 值，示例 6-4 中完成了这些修改：
 
+```rust
+#[derive(Debug)]
+enum UsState {
+  Alabama,
+  Alaska,
+  // -- snip --
+}
+
+enum Coin {
+  Penny,
+  Nickel,
+  Dime,
+  Quarter(UsState),
+}
+
+```
+> Quarter 成员也存放了一个 UsState 值的 Coin 枚举
+
+> 想象一下我们的一个朋友尝试收集所有 50 个州的 25 美分硬币。在根据硬币类型分类零钱的同时，也可以报告出每个 25 美分硬币所对应的州名称，这样如果我们的朋友没有的话，他可以将其加入收藏。
+
+> 在这些代码的匹配表达式中，我们在匹配 Coin::Quarter 成员的分支的模式中增加了一个叫做 state 的变量。当匹配到 Coin::Quarter 时，变量 state 将会绑定 25 美分硬币所对应州的值。接着在那个分支的代码中使用 state，如下：
+
+```rust
+fn value_in_cents(coin: Coin) -> u8 {
+  match coin {
+    Coin::Penny => 1,
+    Coin::Nickel => 5,
+    Coin::Dime => 10,
+    Coin::Quarter(state) => {
+      println!("State quarter from {:?}!", state);
+      25
+    }
+  }
+}
+```
+- 如果调用 value_in_cents(Coin::Quarter(UsState::Alaska))，coin 将是 Coin::Quarter(UsState::Alaska)。当将值与每个分支相比较时，没有分支会匹配，直到遇到 Coin::Quarter(state)。这时，state 绑定的将会是值 UsState::Alaska。接着就可以在 println! 表达式中使用这个绑定了，像这样就可以获取 Coin 枚举的 Quarter 成员中内部的州的值。
+
+### 匹配 Option<T>
+>  我们在之前的部分中使用 Option<T> 时，是为了从 Some 中取出其内部的 T 值；我们还可以像处理 Coin 枚举那样使用 match 处理 Option<T>！只不过这回比较的不再是硬币，而是 Option<T> 的成员，但 match 表达式的工作方式保持不变。
+ 
+>  比如我们想要编写一个函数，它获取一个 Option<i32> ，如果其中含有一个值，将其加一。如果其中没有值，函数应该返回 None 值，而不尝试执行任何操作。
+
+- 得益于 match，编写这个函数非常简单，它将看起来像示例 6-5 中这样：
+```rust
+fn plus_one(x: Option<i32>) -> Option<i32> {
+  match x {
+    None => None,
+    Some(i) => Some(i + 1),
+  }
+}
+
+let five = Some(5);
+let six = plus_one(five);
+let none = plus_one(None);
+
+```
+
+### 匹配 Some(T)
+- 让我们更仔细地检查 plus_one 的第一行操作。当调用 plus_one(five) 时，plus_one 函数体中的 x 将会是值 Some(5)。接着将其与每个分支比较。
+
+```rust
+ None => None,
+```
+
+- 值 Some(5) 并不匹配模式 None，所以继续进行下一个分支。
+```rust
+Some(i) => Some(i + 1),
+```
+- Some(5) 与 Some(i) 匹配吗？当然匹配！它们是相同的成员。i 绑定了 Some 中包含的值，所以 i 的值是 5。接着匹配分支的代码被执行，所以我们将 i 的值加一并返回一个含有值 6 的新 Some。
+
+- 接着考虑下示例 6-5 中 plus_one 的第二个调用，这里 x 是 None。我们进入 match 并与第一个分支相比较。
+
+-  None => None,
+
+- 匹配上了！这里没有值来加一，所以程序结束并返回 => 右侧的值 None，因为第一个分支就匹配到了，其他的分支将不再比较。
+
+- 将 match 与枚举相结合在很多场景中都是有用的。你会在 Rust 代码中看到很多这样的模式：match 一个枚举，绑定其中的值到一个变量，接着根据其值执行代码。这在一开始有点复杂，不过一旦习惯了，你会希望所有语言都拥有它！这一直是用户的最爱。
 
 
+### 匹配是穷尽的
+> match 还有另一方面需要讨论。考虑一下 plus_one 函数的这个版本，它有一个 bug 并不能编译：
+
+```rust
+fn plus_one(x: Option<i32>) -> Option<i32> {
+  match x {
+    Some(i ) => Some(i + 1),
+  }
+}
+```
+- 我们没有处理 None 的情况，所以这些代码会造成一个 bug。幸运的是，这是一个 Rust 知道如何处理的 bug。如果尝试编译这段代码，会得到这个错误：
+
+```shell
+$ cargo run
+   Compiling enums v0.1.0 (file:///projects/enums)
+error[E0004]: non-exhaustive patterns: `None` not covered
+   --> src/main.rs:3:15
+    |
+3   |         match x {
+    |               ^ pattern `None` not covered
+    |
+    = help: ensure that all possible cases are being handled, possibly by adding wildcards or more match arms
+    = note: the matched value is of type `Option<i32>`
+
+For more information about this error, try `rustc --explain E0004`.
+error: could not compile `enums` due to previous error
+```
+
+
+### 通配模式和 _ 占位符
+> 让我们看一个例子，我们希望对一些特定的值采取特殊操作，而对其他的值采取默认操作。想象我们正在玩一个游戏，如果你掷出骰子的值为 3，角色不会移动，而是会得到一顶新奇的帽子。如果你掷出了 7，你的角色将失去新奇的帽子。对于其他的数值，你的角色会在棋盘上移动相应的格子。这是一个实现了上述逻辑的 match，骰子的结果是硬编码而不是一个随机值，其他的逻辑部分使用了没有函数体的函数来表示，实现它们超出了本例的范围：
+  
+```rust
+let dice_roll = 9;
+match dice_roll {
+  3 => add_fancy_hat(),
+  7 => remove_fancy_hat(),
+  other => move_player(other),
+}
+
+fn add_fancy_hat() {}
+fn remove_fancy_hat() {}
+fn move_player(num_spaces: u8) {}
+```
+- 对于前两个分支，匹配模式是字面值 3 和 7，最后一个分支则涵盖了所有其他可能的值，模式是我们命名为 other 的一个变量。other 分支的代码通过将其传递给 move_player 函数来使用这个变量。
+
+- 即使我们没有列出 u8 所有可能的值，这段代码依然能够编译，因为最后一个模式将匹配所有未被特殊列出的值。这种通配模式满足了 match 必须被穷尽的要求。请注意，我们必须将通配分支放在最后，因为模式是按顺序匹配的。如果我们在通配分支后添加其他分支，Rust 将会警告我们，因为此后的分支永远不会被匹配到。
+
+- Rust 还提供了一个模式，当我们不想使用通配模式获取的值时，请使用 _ ，这是一个特殊的模式，可以匹配任意值而不绑定到该值。这告诉 Rust 我们不会使用这个值，所以 Rust 也不会警告我们存在未使用的变量。
+
+- 让我们改变游戏规则，当你掷出的值不是 3 或 7 的时候，你必须再次掷出。这种情况下我们不需要使用这个值，所以我们改动代码使用 _ 来替代变量 other ：
+
+```rust
+let dice_rol = 9;
+match dice_rol {
+  3 => add_fancy_hat(),
+  7 => remove_fancy_hat(),
+  _ => reroll(),
+}
+
+fn add_fancy_hat(){}
+fn remove_fancy_hat(){}
+fn reroll(){}
+```
+- 这个例子也满足穷举性要求，因为我们在最后一个分支中明确地忽略了其他的值。我们没有忘记处理任何东西。
+
+- 让我们再次改变游戏规则，如果你掷出 3 或 7 以外的值，你的回合将无事发生。我们可以使用单元值（在“元组类型”一节中提到的空元组）作为 _ 分支的代码：
+
+```rust
+let dice_roll = 9;
+match dice_rol,l {
+  3 => add_fancey_hat(),
+  7 => remove_fancey_hat(),
+  _ => (),
+}
+
+fn add_fancey_hat() {}
+fn remove_rancey_hat() {}
+```
+
+- 在这里，我们明确告诉 Rust 我们不会使用与前面模式不匹配的值，并且这种情况下我们不想运行任何代码。
+
+- 我们将在第 18 章中介绍更多关于模式和匹配的内容。现在，让我们继续讨论 if let 语法，这在 match 表达式有点啰嗦的情况下很有用。
+  
