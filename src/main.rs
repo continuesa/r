@@ -57,6 +57,13 @@ impl<T> Pointc<T> {
     }
 } 
 
+// 构建一个只用于拥有泛型参数 T 的结构体的具体类型的 impl 块
+impl Pointc<f32> {
+    fn distance_from_origin(&self) -> f32 {
+        (self.x.powi(2)) + self.y.powi(2).sqrt()
+    }
+}
+
 fn main() {
     {
         let integer = Pointa {x: 5, y: 10 };    // 正确的
@@ -83,6 +90,13 @@ fn main() {
     {
         let p = Pointc {x: 5, y: 10};
         println!("p.x = {},  p.y = {}", p.x(), p.y()); // p.x = 5,  p.y = 10
+    }
+
+    println!("=================================");
+
+    {
+        let p = Pointc {x: 39, y: 40};
+        println!("p.x = {},  p.y = {}", p.x(), p.y()); // p.x = 39,  p.y = 40
     }
 
     
